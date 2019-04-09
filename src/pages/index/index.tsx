@@ -33,12 +33,17 @@ export default class Index extends Component {
   }
 
   handleClick (value) {
-    this.setState({
-      current: value
-    })
+
+    if (value === 0){
+      this.resreshArea(()=>{
+        this.setState({
+          current: value
+        })
+      })
+    }
   }
 
-  requestGaokao() {
+  requestGaokaoArea() {
     const p = new Promise<any>((res,rej)=>{
       Taro.request({
           url: 'https://time-machine-firefox.cn',
@@ -58,12 +63,8 @@ export default class Index extends Component {
    return p
   }
 
-  componentWillMount () { 
-    
-  }
-
-  componentDidMount () { 
-    this.requestGaokao().then(res=>{
+  resreshArea(callback:()=>void){
+    this.requestGaokaoArea().then(res=>{
       
       const results : [] = res.data;
       const sors = results.sort((a: any,b: any)=>{
@@ -76,39 +77,61 @@ export default class Index extends Component {
          } else {
            return 0
          }
-      }).filter((item: any)=>{
-        return item.enroll_lot === results[0].enroll_lot
-      })
+      }).reduce((result, item: any)=>{
+        if (!result.has(item.enroll_lot)) {
+          let tmp: any[] = [] 
+          tmp.push(item)
+          result.set(item.enroll_lot, tmp)
+        } else {
+          let r = result.get(item.enroll_lot)
+          r.push(item)
+          result.set(item.enroll_lot, r)
+        }
+        return result
+      }, new Map<String,any>());
 
       console.log(sors)
-      const dimensions = sors.map(item=>{
+     
+      let a = sors.get(results[0].enroll_lot)
+      const dimensions = a.map(item=>{
         return item.enroll_age 
       })
 
-      const measures = sors.map(item=>{
-        return item.low_score
+      let measures: any[] = []
+      for (let v of sors.values()){
+        measures.push({data: v.map(item=>{
+          return item.low_score
+        }),
+        itemStyle: {
+          normal: {
+            // color: '#ff1'
+          }
+        }
       })
-
+      }
+      
       const chartData = {
+        areas: '江苏',
         dimensions: {
           data: dimensions,
         },
-        measures: [{
-          name: 'title',
-          data: measures
-        }, {
-          name : '123',
-          data: measures.map(item=>{
-            return item + 10
-          })
-        }]
+        measures: measures
       }
       this.barChart.refresh(chartData);
-
+      callback()
     }).catch(e => {
       console.log(e)
     })
+  }
+
+  componentWillMount () { 
     
+  }
+
+
+
+  componentDidMount () { 
+    this.handleClick(0);
   }
 
   refBarChart = (node) => this.barChart = node

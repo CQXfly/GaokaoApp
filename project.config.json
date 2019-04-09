@@ -2,7 +2,7 @@
 	"miniprogramRoot": "dist/",
 	"projectname": "GaoKaoApp",
 	"description": "GaokapApp",
-	"appid": "touristappid",
+	"appid": "wx8c9ef1fa8ab51597",
 	"setting": {
 		"urlCheck": true,
 		"es6": false,

@@ -3,17 +3,7 @@ import * as echarts from "./ec-canvas/echarts";
 
 function setChartData(chart, data) {
   let option = {
-    legend: {
-      data: [
-          2017,
-          2016
-      ],
-      textStyle: {
-          color: "red"
-      },
-      selectedMode: "single"
-    },
-    color: ['#3398DB','#f78'],
+    color: ['#3398DB','#f78','#D34'],
     xAxis : [
       {
         type: 'category',
@@ -40,6 +30,10 @@ function setChartData(chart, data) {
         type:'line',
       }
     })
+    if(data.areas !== '江苏') {
+      option.yAxis.min = 400
+      option.yAxis.max = 680
+    }
   }
   chart.setOption(option);
 }
