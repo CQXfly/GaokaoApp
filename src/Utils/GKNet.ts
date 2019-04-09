@@ -20,13 +20,19 @@ export class Net {
         return Net.instance;
     }
 
-    async get() {
-        await Taro.request({
-            url: 'https://time-machine-firefox.cn',
-            data: {
-                type: 'areaScore',
-                area: '江苏',
-            }
-        })   
+     get() : Promise<any> {
+         const p = new Promise<any>((res,rej)=>{
+            Taro.request({
+                url: 'https://time-machine-firefox.cn',
+                data: {
+                    type: 'areaScore',
+                    area: '江苏',
+                },
+                success: (r)=>{
+                    res(r)
+                }
+            })   
+         })
+        return p
     }
 }

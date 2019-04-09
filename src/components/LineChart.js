@@ -4,6 +4,7 @@ import * as echarts from "./ec-canvas/echarts";
 function setChartData(chart, data) {
   let option = {
     color: ['#3398DB','#f78','#D34'],
+    
     xAxis : [
       {
         type: 'category',
@@ -16,8 +17,8 @@ function setChartData(chart, data) {
     yAxis : [
       {
         type : 'value',
-        min: 250,
-        max: 380,
+        min: data.areas !== '江苏' ? 450: 270,
+        max: data.areas !== '江苏' ? 720 : 420,
       }
     ],
     series : []
@@ -30,10 +31,6 @@ function setChartData(chart, data) {
         type:'line',
       }
     })
-    if(data.areas !== '江苏') {
-      option.yAxis.min = 400
-      option.yAxis.max = 680
-    }
   }
   chart.setOption(option);
 }
@@ -52,8 +49,15 @@ export default class LineChart extends Component {
   state = {
     ec: {
       lazyLoad: true
-    }
+    },
+    callback: undefined,
   };
+
+  click(callback){
+    this.setState({
+      callback: callback
+    })
+  }
 
   refresh(data) {
     this.Chart.init((canvas, width, height) => {
@@ -62,6 +66,7 @@ export default class LineChart extends Component {
         height: height
       });
       setChartData(chart, data);
+      chart.on('click',this.state.callback)
       return chart;
     });
   }
