@@ -36,6 +36,9 @@ export default class Index extends Component {
     school: '',
     majore: '',
   }
+
+  currentScores: Map<String,any>
+
   constructor() {
     super(...arguments)
     
@@ -47,23 +50,22 @@ export default class Index extends Component {
     })
   }
   handleClick (value) {
-    
     if (value === 0){
       this.setState({
         current: value,
         searchType: 'areaScore'
-      })
-      
-      this.resreshArea(()=>{
+      },()=>{
+        this.resreshArea(()=>{
        
+        })
       })
     } else if (value === 1) {
       this.setState({
         current: value,
         searchType: 'schoolScore',
+      },()=>{
+        this.refreshSchool()
       })
-
-      this.refreshSchool()
     } else if (value === 2) {
       this.setState({
         current: value,
@@ -76,9 +78,11 @@ export default class Index extends Component {
 
   requestGaokao() {
     const p = new Promise<any>((res,rej)=>{
+      const {searchType, selectorChecked, } = this.state
+
       const reqP = {
-        type: this.state.searchType,
-        area: this.state.selectorChecked,
+        type: searchType,
+        area: selectorChecked,
         arts: this.state.wenliKe === 0 ?'文科' : '理科',
         majore: this.state.majore,
         school: this.state.school,
@@ -104,7 +108,7 @@ export default class Index extends Component {
 
   refreshSchool(){
     this.requestGaokao().then(res=>{
-    
+    console.log(res)
     const results : [] = res.data;
       const sors = results.sort((a: any,b: any)=>{
         const x = Number(a.enroll_age)
@@ -116,24 +120,79 @@ export default class Index extends Component {
          } else {
            return 0
          }
-      })
+      }).reduce((result, item: any)=>{
+        if (!result.has(item.enroll_lot)) {
+          let tmp: any[] = [] 
+          tmp.push(item)
+          result.set(item.enroll_lot, tmp)
+        } else {
+          let r = result.get(item.enroll_lot)
+          r.push(item)
+          result.set(item.enroll_lot, r)
+        }
+        return result
+      }, new Map<String,any>());
 
-      const dimensions = sors.map(item=>{
+      console.log(sors)
+      let a: any[] = []
+      let measures: any[] = []
+      for (let v of sors.values()){
+        //找到v 长度最长的
+        if (v.length >= a.length) {
+          a = v;
+        }
+        measures.push({data: v.map(item=>{
+          return item.av_score
+        }),
+        itemStyle: {
+          normal: {
+            // color: '#ff1'
+          }
+        }
+      })
+      }
+
+      const dimensions = a.map(item=>{
         return item.enroll_age 
       })
+      
+      let yl = 0
+      let yh = 0
+      let ttt = measures.concat()
+      
+      ttt.forEach((item,index)=>{
+        let tmp: any[] = item.data.concat()
+        tmp.sort((a,b)=>{
+          const x = Number(a)
+          const y = Number(b)
+          if (x >= y) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (index === 0) {
+          yl = Number(tmp[0]) // 0是最小值 不给个默认的话 永远是从0开始无法进行比较
+        }
 
-      const measures = sors.map(item=>{
-        return item.av_score
+        if (yl > Number(tmp[0])) {
+          yl = Number(tmp[0])
+        }
+
+        if (yh < Number(tmp[tmp.length-1])) {
+          yh = Number(tmp[tmp.length-1])
+        }
       })
-      debugger
+
+      this.currentScores = sors;
       const chartData = {
         areas: this.state.selectorChecked,
         dimensions: {
           data: dimensions,
         },
-        measures: [{
-          data: measures
-        },],
+        measures: measures,
+        yl:yl - 30,
+        yh:yh + 30,
       }
       this.barChart.refresh(chartData);
 
@@ -186,19 +245,48 @@ export default class Index extends Component {
         }
       })
       }
-
+      
       const dimensions = a.map(item=>{
         return item.enroll_age 
       })
+      
+      let yl = 0
+      let yh = 0
 
+      let ttt = measures.concat()
       
-      
+      ttt.forEach((item,index)=>{
+        let tmp: any[] = item.data.concat()
+        tmp.sort((a,b)=>{
+          const x = Number(a)
+          const y = Number(b)
+          if (x >= y) {
+            return 1
+          } else {
+            return -1
+          }
+        })
+        if (index === 0) {
+          yl = Number(tmp[0]) // 0是最小值 不给个默认的话 永远是从0开始无法进行比较
+        }
+
+        if (yl > Number(tmp[0])) {
+          yl = Number(tmp[0])
+        }
+
+        if (yh < Number(tmp[tmp.length-1])) {
+          yh = Number(tmp[tmp.length-1])
+        }
+      })
+      this.currentScores = sors;
       const chartData = {
         areas: this.state.selectorChecked,
         dimensions: {
           data: dimensions,
         },
-        measures: measures
+        measures: measures,
+        yl:yl - 30,
+        yh:yh + 30,
       }
       this.barChart.refresh(chartData);
       callback()
@@ -221,9 +309,26 @@ export default class Index extends Component {
   componentDidMount () { 
     this.barChart.click((p)=>{
       console.log(p)
-      this.setState({
-        info:p.data,
+      //知道分数 dataIndex
+      this.currentScores.forEach(item=>{
+        console.log(item)
+        let score = 0
+        if(item.length <= p.dataIndex ) {
+          return;
+        }
+        if(this.state.current === 0) {
+          score = item[p.dataIndex].low_score
+        } else {
+          score = item[p.dataIndex].av_score
+        }
+
+        if(score === p.data) {
+          this.setState({
+            info:`${item[p.dataIndex].enroll_lot} ===> ${p.data}`,
+          })
+        }
       })
+      
     })
   }
 

@@ -17,8 +17,10 @@ function setChartData(chart, data) {
     yAxis : [
       {
         type : 'value',
-        min: data.areas !== '江苏' ? 450: 270,
-        max: data.areas !== '江苏' ? 720 : 420,
+        // min: data.areas !== '江苏' ? 450: 270,
+        // max: data.areas !== '江苏' ? 720 : 420,
+        min: data.yl,
+        max: data.yh,
       }
     ],
     series : []
@@ -29,6 +31,7 @@ function setChartData(chart, data) {
       return {
         ...item,
         type:'line',
+        symbolSize: 10
       }
     })
   }
