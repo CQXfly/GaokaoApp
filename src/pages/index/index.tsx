@@ -110,6 +110,13 @@ export default class Index extends Component {
     this.requestGaokao().then(res=>{
     console.log(res)
     const results : [] = res.data;
+      results.forEach((item: any)=>{
+        if (item.enroll_lot === '本科一批') {
+          item.enroll_lot = '第一批'
+        } else if (item.enroll_lot === '本科二批') {
+          item.enroll_lot = '第二批'
+        }
+      })
       const sors = results.sort((a: any,b: any)=>{
         const x = Number(a.enroll_age)
         const y = Number(b.enroll_age)
@@ -128,19 +135,61 @@ export default class Index extends Component {
         } else {
           let r = result.get(item.enroll_lot)
           r.push(item)
+
+          var hash = {};
+          r = r.reduce((item,next)=>{
+            hash[next.enroll_age] ? '' : hash[next.enroll_age] = true && item.push(next);
+            return item
+          },[])
+
           result.set(item.enroll_lot, r)
         }
         return result
       }, new Map<String,any>());
+      
 
       console.log(sors)
-      let a: any[] = []
+      const dimensions = ['2014','2015','2016','2017','2018']
       let measures: any[] = []
       for (let v of sors.values()){
-        //找到v 长度最长的
-        if (v.length >= a.length) {
-          a = v;
+        
+        let index = 0;
+        let vxx : String[] = v.map(item=>{
+          return item.enroll_age
+        })
+
+        //从两个数组中找到不存在的
+        let tmp : string[] = []
+        
+
+        for (let element of dimensions) {
+          if (!vxx.includes(element)) {
+            tmp.push(element)
+          }
         }
+        let lot = v[0].enroll_lot;
+        let av = v[0].av_score
+        tmp.forEach(item=>{
+          v.push({
+            av_score: av,
+            enroll_age: item,
+            enroll_lot: lot
+          })
+        })
+
+        v.sort((a: any,b: any)=>{
+          const x = Number(a.enroll_age)
+          const y = Number(b.enroll_age)
+           if ( x > y){
+             return 1
+           } else if (x < y)  {
+             return -1
+           } else {
+             return 0
+           }
+        })
+        
+
         measures.push({data: v.map(item=>{
           return item.av_score
         }),
@@ -152,9 +201,7 @@ export default class Index extends Component {
       })
       }
 
-      const dimensions = a.map(item=>{
-        return item.enroll_age 
-      })
+      
       
       let yl = 0
       let yh = 0
